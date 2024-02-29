@@ -17,19 +17,7 @@ Create a bridge network in Docker
 
 Run a docker:dind Docker image
 
-`docker run --name jenkins-docker --rm --detach ^`
-
-  `--privileged --network jenkins --network-alias docker ^`
-
-  `--env DOCKER_TLS_CERTDIR=/certs ^`
-
-  `--volume jenkins-docker-certs:/certs/client ^`
-
-  `--volume jenkins-data:/var/jenkins_home ^`
-
-  `--publish 2376:2376 ^`
-
-  `docker:dind`
+`docker run --name jenkins-docker --rm --detach --privileged --network jenkins --network-alias docker --env DOCKER_TLS_CERTDIR=/certs --volume jenkins-docker-certs:/certs/client --volume jenkins-data:/var/jenkins_home --publish 2376:2376 docker:dind`
 
 
 Customize the official Jenkins Docker image, by executing the following two steps:
@@ -38,51 +26,41 @@ Customize the official Jenkins Docker image, by executing the following two step
 Create a Dockerfile with the following content:
 
 
-`FROM jenkins/jenkins:2.426.3-jdk17`
+`FROM jenkins/jenkins:2.426.3-jdk17
 
-`USER root`
+USER root
 
-`RUN apt-get update && apt-get install -y lsb-release`
+RUN apt-get update && apt-get install -y lsb-release
 
-`RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \`
+RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc \
 
-  `https://download.docker.com/linux/debian/gpg`
+  https://download.docker.com/linux/debian/gpg
 
-`RUN echo "deb [arch=$(dpkg --print-architecture) \`
+RUN echo "deb [arch=$(dpkg --print-architecture) \
 
-  `signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \`
+  signed-by=/usr/share/keyrings/docker-archive-keyring.asc] \
 
-  `https://download.docker.com/linux/debian \`
+  https://download.docker.com/linux/debian \
 
-  `$(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list`
+  $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
 
-`RUN apt-get update && apt-get install -y docker-ce-cli`
+RUN apt-get update && apt-get install -y docker-ce-cli
 
-`USER jenkins`
+USER jenkins
 
-`RUN jenkins-plugin-cli --plugins "blueocean docker-workflow"`
+RUN jenkins-plugin-cli --plugins "blueocean docker-workflow"`
 
 
-Build a new docker image from this Dockerfile and assign the image a meaningful name, e.g. "*myjenkins-blueocean:2.426.3-1*":
+Build a new docker image from this Dockerfile and assign the image a meaningful name, e.g. "*amlys-jenkins*":
 
-`docker build -t myjenkins-blueocean:2.426.3-1 .`
+`docker build -t amlys-jenkins .`
 
 If you have not yet downloaded the official Jenkins Docker image, the above process automatically downloads it for you.
 
-Run your own myjenkins-blueocean:2.426.3-1 image as a container in Docker using the following docker run command:
+Run your own amlys-jenkins image as a container in Docker using the following docker run command:
 
 
-`docker run --name jenkins-blueocean --restart=on-failure --detach ^`
+`docker run --name jenkins-blueocean --restart=on-failure --detach --network jenkins --env DOCKER_HOST=tcp://docker:2376 --env DOCKER_CERT_PATH=/certs/client --env DOCKER_TLS_VERIFY=1 --volume jenkins-data:/var/jenkins_home --volume jenkins-docker-certs:/certs/client:ro --publish 8080:8080 --publish 50000:50000 amlys-jenkins`
 
-  `--network jenkins --env DOCKER_HOST=tcp://docker:2376 ^`
-
-  `--env DOCKER_CERT_PATH=/certs/client --env DOCKER_TLS_VERIFY=1 ^`
-
-  `--volume jenkins-data:/var/jenkins_home ^`
-
-  `--volume jenkins-docker-certs:/certs/client:ro ^`
-
-  `--publish 8080:8080 --publish 50000:50000 myjenkins-blueocean:2.426.3-1`
-
-
+docker run --name jenkins-blueocean --restart=on-failure --detach --network jenkins --env DOCKER_HOST=tcp://docker:2376 --env DOCKER_CERT_PATH=/certs/client --env DOCKER_TLS_VERIFY=1 --volume jenkins-data:/var/jenkins_home --volume jenkins-docker-certs:/certs/client:ro --publish 8080:8080 --publish 50000:50000 amlys-blueocean:2.426.3-1
 Proceed to the Setup wizard.
